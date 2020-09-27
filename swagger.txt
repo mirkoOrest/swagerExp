@@ -1,0 +1,180 @@
+openapi: 3.0.0
+servers: []
+info:
+  description: Example API for test assignment on backend developer position
+  version: "1.0.0"
+  title: Simple Blog API
+  contact:
+    email: k.zgara@seedium.io
+tags:
+  - name: Blog
+    description: Blog actions
+paths:
+  /posts:
+    get:
+      tags:
+        - Blog
+      summary: Get List of Posts
+      description: |
+        By passing in the appropriate options, you can get
+        available posts in the system
+      parameters:
+        - in: query
+          name: endingBefore
+          description: A cursor for use in pagination. endingBefore is an object ID that defines your place in the list. For instance, if you make a list request and receive 100 objects, starting with obj_bar, your subsequent call can include endingBefore=obj_bar in order to fetch the previous page of the list.
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: startingAfter
+          description: A cursor for use in pagination. startingAfter is an object ID that defines your place in the list. For instance, if you make a list request and receive 100 objects, ending with obj_foo, your subsequent call can include startingAfter=obj_foo in order to fetch the next page of the list.
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: Posts per page
+          required: false
+          schema:
+            type: string
+            default: 20
+      responses:
+        '200':
+          description: search results matching criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hasMore:
+                    type: boolean
+                    description: True if has more posts
+                    default: false
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Post'
+        '400':
+          description: bad input parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Server error. Cannot process this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    post:
+      tags:
+        - Blog
+      summary: Create the Post
+      description: By passing the paylod of Post, you can create new one
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostBody'
+      responses:
+        201:
+          description: Return the post creation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        400:
+          description: bad input parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        500:
+          description: Server error. Cannot process this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+components:
+  schemas:
+    PostBody:
+      type: object
+      required:
+        - title
+        - author
+        - image
+      properties:
+        title:
+          type: string
+          example: Widget Adapter
+        author:
+          type: string
+          example: Test User
+        image:
+          $ref: '#/components/schemas/FileBody'
+    Post:
+      allOf:
+        - $ref: '#/components/schemas/PostBody'
+        - type: object
+          required:
+            - _id
+            - created
+            - updated
+          properties:
+            _id:
+              type: string
+              format: uuid
+              example: 507f1f77bcf86cd799439011
+            created:
+              type: number
+              format: timestamp
+              example: 1568882750
+            updated:
+              type: number
+              format: timestamp
+              example: 1568882750
+            image:
+              $ref: '#/components/schemas/File'
+            isActive:
+              type: boolean
+              description: State for post. Can be disabled by admin
+              default: true
+    FileBody:
+      type: object
+      required:
+        - src
+      properties:
+        src:
+          type: string
+          example: https://cdn.example.com/files/logo.png
+    File:
+      allOf:
+        - $ref: '#/components/schemas/FileBody'
+        - type: object
+          required:
+            - _id
+            - created
+            - updated
+          properties:
+            _id:
+              type: string
+              example: 507f1f77bcf86cd799439011
+            created:
+              type: number
+              format: timestamp
+              example: 1568882750
+            updated:
+              type: number
+              format: timestamp
+              example: 1568882750
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          example: resource_already_exists
+          description: persistance code for error indentification
+        message:
+          type: string
+          example: Resource already exists. Please use other words for creation
+          description: Human readable message for output on client side
